@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: "Release tag to create or update, for example v0.1.0-alpha.1"
+        description: "Release tag to create or update, for example v0.1.0-testnet-alpha.1"
         required: true
-        default: "v0.1.0-alpha.1"
+        default: "v0.1.0-testnet-alpha.1"
       draft:
         description: "Create the release as a draft when it does not already exist"
         required: true
@@ -240,17 +240,26 @@ jobs:
           xcrun stapler validate "${DMG_PATH}"
 
       - name: Prepare release artifacts
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag_name }}
         run: |
           set -euo pipefail
 
           mkdir -p release-artifacts
-          find src-tauri/target -type f -path "*/release/bundle/dmg/*.dmg" -exec cp {} release-artifacts/ \;
+          DMG_PATH="$(find src-tauri/target -type f -path "*/release/bundle/dmg/*.dmg" | head -n 1)"
+          if [[ -z "${DMG_PATH}" ]]; then
+            echo "DMG artifact was not found."
+            exit 1
+          fi
+
+          SAFE_TAG="${TAG_NAME//\//-}"
+          cp "${DMG_PATH}" "release-artifacts/verus-notes-testnet-${SAFE_TAG}-macos-universal.dmg"
           ls -la release-artifacts
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: verus-notes-macos-dmg
+          name: verus-notes-testnet-macos-dmg
           path: release-artifacts/*
           if-no-files-found: error
 
@@ -293,25 +302,27 @@ jobs:
 
       - name: Prepare release artifacts
         shell: pwsh
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag_name }}
         run: |
           New-Item -ItemType Directory -Force -Path release-artifacts | Out-Null
-          $artifacts = Get-ChildItem -Path src-tauri\target -Recurse -File -Include *.exe |
-            Where-Object { $_.FullName -like "*\bundle\nsis\*" }
+          $artifact = Get-ChildItem -Path src-tauri\target -Recurse -File -Include *.exe |
+            Where-Object { $_.FullName -like "*\bundle\nsis\*" } |
+            Select-Object -First 1
 
-          if (-not $artifacts) {
+          if (-not $artifact) {
             throw "No NSIS installer artifact was found."
           }
 
-          $artifacts | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination release-artifacts
-          }
+          $safeTag = $env:TAG_NAME -replace '[\\/]+', '-'
+          Copy-Item -Path $artifact.FullName -Destination "release-artifacts\verus-notes-testnet-$safeTag-windows-nsis.exe"
 
           Get-ChildItem -Path release-artifacts
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: verus-notes-windows-nsis
+          name: verus-notes-testnet-windows-nsis
           path: release-artifacts/*
           if-no-files-found: error
 
@@ -363,16 +374,20 @@ jobs:
         run: pnpm tauri build --bundles appimage
 
       - name: Prepare release artifacts
+        env:
+          TAG_NAME: ${{ github.event.inputs.tag_name }}
         run: |
           set -euo pipefail
 
           mkdir -p release-artifacts
-          find src-tauri/target -type f -path "*/release/bundle/appimage/*.AppImage" -exec cp {} release-artifacts/ \;
-
-          if ! find release-artifacts -type f -name "*.AppImage" | grep -q .; then
+          APPIMAGE_PATH="$(find src-tauri/target -type f -path "*/release/bundle/appimage/*.AppImage" | head -n 1)"
+          if [[ -z "${APPIMAGE_PATH}" ]]; then
             echo "No AppImage artifact was found."
             exit 1
           fi
+
+          SAFE_TAG="${TAG_NAME//\//-}"
+          cp "${APPIMAGE_PATH}" "release-artifacts/verus-notes-testnet-${SAFE_TAG}-linux-x86_64.AppImage"
 
           chmod +x release-artifacts/*.AppImage
           ls -la release-artifacts
@@ -380,7 +395,7 @@ jobs:
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: verus-notes-linux-appimage
+          name: verus-notes-testnet-linux-appimage
           path: release-artifacts/*
           if-no-files-found: error
 
@@ -421,7 +436,7 @@ jobs:
           set -euo pipefail
 
           release_flags=(
-            --title "Verus Notes ${TAG_NAME}"
+            --title "Verus Notes Testnet ${TAG_NAME}"
             --notes "Testnet alpha build. Includes signed and notarized macOS DMG, unsigned Windows NSIS installer, and Linux AppImage."
           )
 
