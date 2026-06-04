@@ -1,0 +1,64 @@
+{
+  "name": "verus-notes",
+  "version": "0.1.0",
+  "description": "Native encrypted notes unlocked by a Verus wallet",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "design:lint": "design.md lint DESIGN.md",
+    "design:spec": "design.md spec --rules",
+    "verify:no-local-signer": "node scripts/check-no-local-wallet-signer.mjs",
+    "verify:no-unlock-artifacts": "node scripts/check-no-unlock-artifacts.mjs",
+    "verify:no-wallet-secrets": "node scripts/check-no-wallet-secrets.mjs",
+    "verify:frontend": "pnpm verify:no-local-signer && pnpm verify:no-wallet-secrets && pnpm verify:no-unlock-artifacts && pnpm test:wallet-secret-scan && pnpm test:unlock-artifact-scan && pnpm design:lint && pnpm check && pnpm test:workspace-document && pnpm test:wallet-unlock-state && pnpm test:note-persistence && pnpm test:cloud-discovery-guard && pnpm test:cloud-sync-preflight && pnpm test:markdown-editor && pnpm build",
+    "convex:codegen": "convex codegen",
+    "convex:dev": "convex dev",
+    "convex:typecheck": "tsc -p convex/tsconfig.json",
+    "test:cloud-auth-session": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-cloud-auth-session.ts && tsx scripts/test-cloud-auth-session.ts",
+    "test:cloud-discovery-guard": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-cloud-discovery-guard.ts && tsx scripts/test-cloud-discovery-guard.ts",
+    "test:convex-auth-lifecycle": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-convex-auth-lifecycle.ts && tsx scripts/test-convex-auth-lifecycle.ts",
+    "test:cloud-sync-preflight": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom scripts/test-cloud-sync-preflight.ts && tsx scripts/test-cloud-sync-preflight.ts",
+    "test:encrypted-record-policy": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-encrypted-record-policy.ts && tsx scripts/test-encrypted-record-policy.ts",
+    "test:markdown-editor": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom scripts/test-markdown-editor.ts && tsx scripts/test-markdown-editor.ts",
+    "test:note-persistence": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 --lib es2022,dom scripts/test-note-persistence.ts && tsx scripts/test-note-persistence.ts",
+    "test:unlock-artifact-scan": "node scripts/test-unlock-artifact-scan.mjs",
+    "test:wallet-secret-scan": "node scripts/test-wallet-secret-scan.mjs",
+    "test:wallet-unlock-state": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-wallet-unlock-state.ts && tsx scripts/test-wallet-unlock-state.ts",
+    "test:workspace-document": "tsc --noEmit --strict --skipLibCheck --moduleResolution bundler --module esnext --target es2022 scripts/test-workspace-document.ts && tsx scripts/test-workspace-document.ts",
+    "audit:prod": "pnpm audit --prod",
+    "verify:local-first": "pnpm check && pnpm convex:typecheck && cargo test --manifest-path src-tauri/Cargo.toml local_first_unlock_encrypt_reload_export_import",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "tauri": "tauri"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@lucide/svelte": "^1.16.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
+    "@tauri-apps/api": "^2",
+    "convex": "^1.39.1",
+    "qrcode": "^1.5.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "ws": "8.21.0"
+    }
+  },
+  "devDependencies": {
+    "@google/design.md": "0.1.1",
+    "@sveltejs/adapter-static": "^3.0.6",
+    "@sveltejs/kit": "^2.9.0",
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^25.8.0",
+    "@types/qrcode": "^1.5.6",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "tsx": "^4.22.3",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
+  }
+}
